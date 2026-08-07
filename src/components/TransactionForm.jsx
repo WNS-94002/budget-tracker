@@ -186,7 +186,6 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
               ref={fileInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               onChange={handleFileChange}
               className="w-full text-sm"
             />
