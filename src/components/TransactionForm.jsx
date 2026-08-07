@@ -29,7 +29,7 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
         note: initial.note || '',
         date: initial.date,
       })
-      setImagePreview(initial.imageUrl || null)
+      setImagePreview(initial.image || null)
     } else {
       setForm(emptyForm)
       setImagePreview(null)

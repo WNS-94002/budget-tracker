@@ -10,6 +10,7 @@ import {
   updateTransaction,
   deleteTransaction,
 } from './lib/transactions.js'
+import { compressImageToDataUrl } from './lib/imageCompress.js'
 
 const FIREBASE_CONFIGURED = Boolean(import.meta.env.VITE_FIREBASE_API_KEY)
 
@@ -87,13 +88,17 @@ export default function App() {
   async function handleSubmit(payload) {
     if (editingItem) {
       const { imageFile, ...rest } = payload
-      await updateTransaction(editingItem.id, {
+      const changes = {
         type: rest.type,
         amount: Number(rest.amount),
         category: rest.category,
         note: rest.note,
         date: rest.date,
-      })
+      }
+      if (imageFile) {
+        changes.image = await compressImageToDataUrl(imageFile)
+      }
+      await updateTransaction(editingItem.id, changes)
     } else {
       await addTransaction(payload)
     }

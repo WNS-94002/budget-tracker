@@ -40,9 +40,9 @@ export default function TransactionList({ items, onEdit, onDelete }) {
           <div className="bg-white rounded-xl shadow-sm divide-y divide-slate-100">
             {entries.map((item) => (
               <div key={item.id} className="flex items-center gap-3 p-3">
-                {item.imageUrl ? (
+                {item.image ? (
                   <img
-                    src={item.imageUrl}
+                    src={item.image}
                     alt={item.category}
                     className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-slate-200"
                   />

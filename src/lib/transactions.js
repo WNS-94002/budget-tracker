@@ -7,13 +7,8 @@ import {
   onSnapshot,
   serverTimestamp,
 } from 'firebase/firestore'
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage'
-import { db, storage } from '../firebase.js'
+import { db } from '../firebase.js'
+import { compressImageToDataUrl } from './imageCompress.js'
 
 const COLLECTION = 'transactions'
 
@@ -37,15 +32,6 @@ export function subscribeTransactions(onChange, onError) {
   )
 }
 
-async function uploadReceiptImage(file) {
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
-  const path = `receipts/${Date.now()}-${safeName}`
-  const storageRef = ref(storage, path)
-  await uploadBytes(storageRef, file)
-  const url = await getDownloadURL(storageRef)
-  return { url, path }
-}
-
 export async function addTransaction({
   type,
   amount,
@@ -54,13 +40,9 @@ export async function addTransaction({
   date,
   imageFile,
 }) {
-  let imageUrl = null
-  let imagePath = null
-
+  let image = null
   if (imageFile) {
-    const uploaded = await uploadReceiptImage(imageFile)
-    imageUrl = uploaded.url
-    imagePath = uploaded.path
+    image = await compressImageToDataUrl(imageFile)
   }
 
   await addDoc(collection(db, COLLECTION), {
@@ -69,8 +51,7 @@ export async function addTransaction({
     category: category || 'ไม่ระบุหมวดหมู่',
     note: note || '',
     date,
-    imageUrl,
-    imagePath,
+    image,
     createdAt: serverTimestamp(),
   })
 }
@@ -80,13 +61,5 @@ export async function updateTransaction(id, changes) {
 }
 
 export async function deleteTransaction(item) {
-  if (item.imagePath) {
-    try {
-      await deleteObject(ref(storage, item.imagePath))
-    } catch (err) {
-      // Image may already be gone; don't block deleting the record.
-      console.warn('ลบรูปภาพไม่สำเร็จ', err)
-    }
-  }
   await deleteDoc(doc(db, COLLECTION, item.id))
 }
