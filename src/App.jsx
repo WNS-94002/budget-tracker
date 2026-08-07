@@ -3,7 +3,6 @@ import SummaryCards from './components/SummaryCards.jsx'
 import PeriodFilter from './components/PeriodFilter.jsx'
 import TransactionForm from './components/TransactionForm.jsx'
 import TransactionList from './components/TransactionList.jsx'
-import { waitForAuth } from './firebase.js'
 import {
   subscribeTransactions,
   addTransaction,
@@ -17,8 +16,6 @@ const FIREBASE_CONFIGURED = Boolean(import.meta.env.VITE_FIREBASE_API_KEY)
 const now = new Date()
 
 export default function App() {
-  const [authReady, setAuthReady] = useState(false)
-  const [authError, setAuthError] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [loadError, setLoadError] = useState(null)
 
@@ -31,19 +28,12 @@ export default function App() {
 
   useEffect(() => {
     if (!FIREBASE_CONFIGURED) return
-    waitForAuth()
-      .then(() => setAuthReady(true))
-      .catch((err) => setAuthError(err.message))
-  }, [])
-
-  useEffect(() => {
-    if (!authReady) return
     const unsubscribe = subscribeTransactions(
       setTransactions,
       (err) => setLoadError(err.message),
     )
     return unsubscribe
-  }, [authReady])
+  }, [])
 
   const years = useMemo(() => {
     const set = new Set(transactions.map((t) => Number(t.date.slice(0, 4))))
@@ -141,21 +131,13 @@ export default function App() {
     )
   }
 
-  if (authError || loadError) {
+  if (loadError) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-2">
           <h1 className="text-xl font-semibold text-rose-600">เกิดข้อผิดพลาด</h1>
-          <p className="text-slate-600 text-sm">{authError || loadError}</p>
+          <p className="text-slate-600 text-sm">{loadError}</p>
         </div>
-      </div>
-    )
-  }
-
-  if (!authReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-slate-400">กำลังเชื่อมต่อ...</p>
       </div>
     )
   }

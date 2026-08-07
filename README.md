@@ -45,7 +45,7 @@ npm run dev
 
 ## หมายเหตุ
 
-- แอปนี้ไม่มีระบบ login แต่ยังคง "sign in anonymously" กับ Firebase อยู่เบื้องหลัง (ไม่มี UI ให้เห็น) เพื่อให้เป็นไปตามเงื่อนไขความปลอดภัยของ Firestore rules เท่านั้น ไม่ได้แยกข้อมูลรายบุคคล — ทุกคนที่เข้าเว็บนี้ใช้ข้อมูลชุดเดียวกัน
+- แอปนี้ไม่มีระบบ login และไม่ได้เปิดใช้ Firebase Authentication เลย (Anonymous Auth บนโปรเจกต์ Firebase ใหม่ต้องผูกบัตรเครดิต/แผน Blaze จึงข้ามไป) Firestore rules จึงเป็นแบบเปิด (`allow read, write: if true;`) — ใครก็ตามที่มีลิงก์เว็บนี้เข้าถึงข้อมูลได้ทั้งหมด ทุกคนที่เข้าเว็บนี้ใช้ข้อมูลชุดเดียวกัน
 - รูปใบเสร็จจะถูกย่อขนาด/บีบอัดในเบราว์เซอร์ก่อนบันทึก (ไม่เกินประมาณ 900KB ต่อรูป) เพราะเก็บอยู่ในเอกสาร Firestore โดยตรง (จำกัดที่ 1MB ต่อรายการ)
 - Firebase ใช้แผนฟรี (Spark plan) เพียงพอสำหรับการใช้งานส่วนตัว ไม่ต้องผูกบัตรเครดิต
 - Security rules อยู่ที่ [`firebase-rules/firestore.rules`](./firebase-rules/firestore.rules) — แก้ไขแล้ว deploy ใหม่ด้วย `firebase deploy --only firestore:rules --project budget-tracker-wasin`

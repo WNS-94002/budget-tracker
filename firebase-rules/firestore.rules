@@ -1,8 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // No Firebase Auth is configured for this project (Anonymous Auth would
+    // require attaching a Blaze billing account). Access control here is
+    // "whoever has this Firestore project's public API key/URL" — the same
+    // trust model as the app having no login screen. Don't share the link.
     match /transactions/{docId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if true;
     }
   }
 }

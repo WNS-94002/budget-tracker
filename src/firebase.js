@@ -1,5 +1,4 @@
 import { initializeApp } from 'firebase/app'
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -13,28 +12,4 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig)
 
-export const auth = getAuth(app)
 export const db = getFirestore(app)
-export const storage = getStorage(app)
-
-// No login screen: sign in anonymously in the background so Firestore/Storage
-// security rules (which require request.auth != null) are satisfied without
-// bothering the user with a sign-in flow.
-export function waitForAuth() {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (user) {
-          unsubscribe()
-          resolve(user)
-        }
-      },
-      reject,
-    )
-    signInAnonymously(auth).catch((err) => {
-      unsubscribe()
-      reject(err)
-    })
-  })
-}
