@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { formatBaht } from '../lib/categories.js'
+import ImageLightbox from './ImageLightbox.jsx'
 
 function groupByDate(items) {
   const groups = new Map()
@@ -20,6 +22,8 @@ function formatDateHeading(dateStr) {
 }
 
 export default function TransactionList({ items, onEdit, onDelete }) {
+  const [lightboxSrc, setLightboxSrc] = useState(null)
+
   if (items.length === 0) {
     return (
       <div className="text-center text-slate-400 py-16">
@@ -41,11 +45,18 @@ export default function TransactionList({ items, onEdit, onDelete }) {
             {entries.map((item) => (
               <div key={item.id} className="flex items-center gap-3 p-3">
                 {item.image ? (
-                  <img
-                    src={item.image}
-                    alt={item.category}
-                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border border-slate-200"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setLightboxSrc(item.image)}
+                    className="flex-shrink-0"
+                    aria-label="ดูรูปเต็ม"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.category}
+                      className="w-12 h-12 rounded-lg object-cover border border-slate-200"
+                    />
+                  </button>
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs flex-shrink-0">
                     ไม่มีรูป
@@ -92,6 +103,8 @@ export default function TransactionList({ items, onEdit, onDelete }) {
           </div>
         </div>
       ))}
+
+      <ImageLightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../lib/categories.js'
+import { recognizeReceiptText, parseReceiptText } from '../lib/ocr.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -17,6 +18,8 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
   const [imagePreview, setImagePreview] = useState(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
+  const [ocrLoading, setOcrLoading] = useState(false)
+  const [ocrProgress, setOcrProgress] = useState(0)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -58,6 +61,39 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
     setError(null)
+  }
+
+  async function handleReadReceipt() {
+    const source = imageFile || imagePreview
+    if (!source) return
+    setOcrLoading(true)
+    setOcrProgress(0)
+    setError(null)
+    try {
+      const text = await recognizeReceiptText(source, (m) => {
+        if (m.status === 'recognizing text') {
+          setOcrProgress(Math.round((m.progress || 0) * 100))
+        }
+      })
+      const guess = parseReceiptText(text)
+      setForm((f) => ({
+        ...f,
+        type: 'expense',
+        category: EXPENSE_CATEGORIES.includes(guess.category)
+          ? guess.category
+          : f.category,
+        amount: guess.amount != null ? String(guess.amount) : f.amount,
+        note: guess.note || f.note,
+      }))
+      if (guess.amount == null) {
+        setError('อ่านบิลได้แต่หาจำนวนเงินไม่เจอ กรุณากรอกเอง')
+      }
+    } catch (err) {
+      console.error(err)
+      setError('อ่านบิลไม่สำเร็จ: ' + (err?.message || ''))
+    } finally {
+      setOcrLoading(false)
+    }
   }
 
   async function handleSubmit(e) {
@@ -190,11 +226,26 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
               className="w-full text-sm"
             />
             {imagePreview && (
-              <img
-                src={imagePreview}
-                alt="ตัวอย่างรูปภาพ"
-                className="mt-2 max-h-40 rounded-lg border border-slate-200"
-              />
+              <>
+                <img
+                  src={imagePreview}
+                  alt="ตัวอย่างรูปภาพ"
+                  className="mt-2 max-h-40 rounded-lg border border-slate-200"
+                />
+                <button
+                  type="button"
+                  onClick={handleReadReceipt}
+                  disabled={ocrLoading}
+                  className="mt-2 w-full py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {ocrLoading
+                    ? `กำลังอ่านบิล... ${ocrProgress}%`
+                    : 'อ่านบิลอัตโนมัติด้วย OCR (ฟรี)'}
+                </button>
+                <p className="mt-1 text-xs text-slate-400">
+                  ระบบจะเดาจำนวนเงิน/หมวดหมู่ให้ กรุณาตรวจสอบก่อนบันทึก
+                </p>
+              </>
             )}
           </div>
 
