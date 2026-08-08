@@ -11,7 +11,7 @@ import {
   deleteTransaction,
 } from './lib/transactions.js'
 import { subscribeCompanyProfile, saveCompanyProfile } from './lib/settings.js'
-import { compressImageToDataUrl } from './lib/imageCompress.js'
+import { processAttachment } from './lib/imageCompress.js'
 import { splitVatFromGross } from './lib/vat.js'
 
 const FIREBASE_CONFIGURED = Boolean(import.meta.env.VITE_FIREBASE_API_KEY)
@@ -115,7 +115,7 @@ export default function App() {
           : {}),
       }
       if (imageFile) {
-        changes.image = await compressImageToDataUrl(imageFile)
+        changes.image = await processAttachment(imageFile)
       }
       await updateTransaction(editingItem.id, changes)
     } else {

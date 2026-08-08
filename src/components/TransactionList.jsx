@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatBaht } from '../lib/categories.js'
+import { isPdfDataUrl } from '../lib/imageCompress.js'
 import ImageLightbox from './ImageLightbox.jsx'
 
 function groupByDate(items) {
@@ -49,13 +50,19 @@ export default function TransactionList({ items, onEdit, onDelete }) {
                     type="button"
                     onClick={() => setLightboxSrc(item.image)}
                     className="flex-shrink-0"
-                    aria-label="ดูรูปเต็ม"
+                    aria-label={isPdfDataUrl(item.image) ? 'ดู PDF' : 'ดูรูปเต็ม'}
                   >
-                    <img
-                      src={item.image}
-                      alt={item.category}
-                      className="w-12 h-12 rounded-lg object-cover border border-slate-200"
-                    />
+                    {isPdfDataUrl(item.image) ? (
+                      <div className="w-12 h-12 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 text-[10px] font-semibold">
+                        PDF
+                      </div>
+                    ) : (
+                      <img
+                        src={item.image}
+                        alt={item.category}
+                        className="w-12 h-12 rounded-lg object-cover border border-slate-200"
+                      />
+                    )}
                   </button>
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 text-xs flex-shrink-0">

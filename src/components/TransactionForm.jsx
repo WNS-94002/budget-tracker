@@ -4,6 +4,7 @@ import { recognizeReceiptText, parseReceiptText } from '../lib/ocr.js'
 import { learnCategory } from '../lib/ocrMemory.js'
 import { splitVatFromGross } from '../lib/vat.js'
 import { isValidThaiTaxId } from '../lib/taxId.js'
+import { isPdfDataUrl } from '../lib/imageCompress.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -76,8 +77,8 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
   function handleFileChange(e) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) {
-      setError('กรุณาเลือกไฟล์รูปภาพเท่านั้น')
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      setError('กรุณาเลือกไฟล์รูปภาพหรือ PDF เท่านั้น')
       return
     }
     setImageFile(file)
@@ -85,6 +86,10 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
     setError(null)
     setOcrMerchantKey(null)
   }
+
+  const isPdfAttachment = imageFile
+    ? imageFile.type === 'application/pdf'
+    : isPdfDataUrl(imagePreview)
 
   async function handleReadReceipt() {
     const source = imageFile || imagePreview
@@ -371,36 +376,53 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
 
           <div>
             <label className="block text-sm text-slate-600 mb-1">
-              แนบรูปภาพ (ไม่บังคับ)
+              แนบรูปภาพหรือไฟล์ PDF (ไม่บังคับ)
             </label>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/*,application/pdf"
               onChange={handleFileChange}
               className="w-full text-sm"
             />
             {imagePreview && (
               <>
-                <img
-                  src={imagePreview}
-                  alt="ตัวอย่างรูปภาพ"
-                  className="mt-2 max-h-40 rounded-lg border border-slate-200"
-                />
-                <button
-                  type="button"
-                  onClick={handleReadReceipt}
-                  disabled={ocrLoading}
-                  className="mt-2 w-full py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                >
-                  {ocrLoading
-                    ? `กำลังอ่านบิล... ${ocrProgress}%`
-                    : 'อ่านบิลอัตโนมัติด้วย OCR (ฟรี)'}
-                </button>
-                <p className="mt-1 text-xs text-slate-400">
-                  ระบบจะเดาจำนวนเงิน/หมวดหมู่ให้ กรุณาตรวจสอบก่อนบันทึก — ถ้าแก้หมวดหมู่แล้วกดบันทึก
-                  ระบบจะจำไว้ว่าร้านนี้เป็นหมวดหมู่นี้ ครั้งต่อไปจะเดาให้ถูกทันที
-                </p>
+                {isPdfAttachment ? (
+                  <iframe
+                    src={imagePreview}
+                    title="ตัวอย่างไฟล์ PDF"
+                    className="mt-2 w-full h-40 rounded-lg border border-slate-200"
+                  />
+                ) : (
+                  <img
+                    src={imagePreview}
+                    alt="ตัวอย่างรูปภาพ"
+                    className="mt-2 max-h-40 rounded-lg border border-slate-200"
+                  />
+                )}
+
+                {isPdfAttachment ? (
+                  <p className="mt-1 text-xs text-slate-400">
+                    ไฟล์ PDF ไม่รองรับการอ่านบิลอัตโนมัติ (OCR) กรุณากรอกจำนวนเงิน/หมวดหมู่เอง
+                  </p>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleReadReceipt}
+                      disabled={ocrLoading}
+                      className="mt-2 w-full py-2 rounded-lg border border-slate-300 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {ocrLoading
+                        ? `กำลังอ่านบิล... ${ocrProgress}%`
+                        : 'อ่านบิลอัตโนมัติด้วย OCR (ฟรี)'}
+                    </button>
+                    <p className="mt-1 text-xs text-slate-400">
+                      ระบบจะเดาจำนวนเงิน/หมวดหมู่ให้ กรุณาตรวจสอบก่อนบันทึก — ถ้าแก้หมวดหมู่แล้วกดบันทึก
+                      ระบบจะจำไว้ว่าร้านนี้เป็นหมวดหมู่นี้ ครั้งต่อไปจะเดาให้ถูกทันที
+                    </p>
+                  </>
+                )}
               </>
             )}
           </div>

@@ -8,7 +8,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
-import { compressImageToDataUrl } from './imageCompress.js'
+import { processAttachment } from './imageCompress.js'
 import { splitVatFromGross } from './vat.js'
 
 const COLLECTION = 'transactions'
@@ -49,7 +49,7 @@ export async function addTransaction({
 }) {
   let image = null
   if (imageFile) {
-    image = await compressImageToDataUrl(imageFile)
+    image = await processAttachment(imageFile)
   }
 
   const grossAmount = Number(amount)
