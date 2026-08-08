@@ -66,6 +66,11 @@ export default function TransactionList({ items, onEdit, onDelete }) {
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-800 truncate">
                     {item.category}
+                    {item.hasVat && (
+                      <span className="ml-1.5 inline-block text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 align-middle">
+                        VAT
+                      </span>
+                    )}
                   </p>
                   {item.note && (
                     <p className="text-sm text-slate-500 truncate">{item.note}</p>

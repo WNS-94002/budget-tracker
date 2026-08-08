@@ -10,10 +10,16 @@ import {
   deleteTransaction,
 } from './lib/transactions.js'
 import { compressImageToDataUrl } from './lib/imageCompress.js'
+import { splitVatFromGross } from './lib/vat.js'
 
 const FIREBASE_CONFIGURED = Boolean(import.meta.env.VITE_FIREBASE_API_KEY)
 
 const now = new Date()
+
+function splitVatFromGrossFields(grossAmount) {
+  const { base, vat } = splitVatFromGross(grossAmount)
+  return { vatBase: base, vatAmount: vat }
+}
 
 export default function App() {
   const [transactions, setTransactions] = useState([])
@@ -78,12 +84,23 @@ export default function App() {
   async function handleSubmit(payload) {
     if (editingItem) {
       const { imageFile, ...rest } = payload
+      const grossAmount = Number(rest.amount)
       const changes = {
         type: rest.type,
-        amount: Number(rest.amount),
+        amount: grossAmount,
         category: rest.category,
         note: rest.note,
         date: rest.date,
+        hasVat: Boolean(rest.hasVat),
+        ...(rest.hasVat
+          ? {
+              vatInvoiceType: rest.vatInvoiceType || 'full',
+              vatInvoiceNumber: rest.vatInvoiceNumber || '',
+              vatTaxId: rest.vatTaxId || '',
+              vatCreditBlocked: Boolean(rest.vatCreditBlocked),
+              ...splitVatFromGrossFields(grossAmount),
+            }
+          : {}),
       }
       if (imageFile) {
         changes.image = await compressImageToDataUrl(imageFile)
@@ -111,6 +128,19 @@ export default function App() {
     } catch (err) {
       console.error(err)
       alert('สร้าง PDF ไม่สำเร็จ: ' + err.message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  async function handleExportVat() {
+    setExporting(true)
+    try {
+      const { generateVatReport } = await import('./lib/vatReport.js')
+      await generateVatReport(transactions, { year, month })
+    } catch (err) {
+      console.error(err)
+      alert('สร้างรายงานภาษีไม่สำเร็จ: ' + err.message)
     } finally {
       setExporting(false)
     }
@@ -171,6 +201,7 @@ export default function App() {
           onMonthChange={setMonth}
           onExportMonth={() => handleExport('month')}
           onExportYear={() => handleExport('year')}
+          onExportVat={handleExportVat}
           exporting={exporting}
         />
 

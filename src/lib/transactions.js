@@ -9,6 +9,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '../firebase.js'
 import { compressImageToDataUrl } from './imageCompress.js'
+import { splitVatFromGross } from './vat.js'
 
 const COLLECTION = 'transactions'
 
@@ -39,21 +40,44 @@ export async function addTransaction({
   note,
   date,
   imageFile,
+  hasVat,
+  vatInvoiceType,
+  vatInvoiceNumber,
+  vatTaxId,
+  vatCreditBlocked,
 }) {
   let image = null
   if (imageFile) {
     image = await compressImageToDataUrl(imageFile)
   }
 
+  const grossAmount = Number(amount)
+  const vatFields = hasVat
+    ? {
+        hasVat: true,
+        vatInvoiceType: vatInvoiceType || 'full',
+        vatInvoiceNumber: vatInvoiceNumber || '',
+        vatTaxId: vatTaxId || '',
+        vatCreditBlocked: Boolean(vatCreditBlocked),
+        ...splitVatToStoredFields(grossAmount),
+      }
+    : { hasVat: false }
+
   await addDoc(collection(db, COLLECTION), {
     type,
-    amount: Number(amount),
+    amount: grossAmount,
     category: category || 'ไม่ระบุหมวดหมู่',
     note: note || '',
     date,
     image,
+    ...vatFields,
     createdAt: serverTimestamp(),
   })
+}
+
+function splitVatToStoredFields(grossAmount) {
+  const { base, vat } = splitVatFromGross(grossAmount)
+  return { vatBase: base, vatAmount: vat }
 }
 
 export async function updateTransaction(id, changes) {

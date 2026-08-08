@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../lib/categories.js'
+import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, formatBaht } from '../lib/categories.js'
 import { recognizeReceiptText, parseReceiptText } from '../lib/ocr.js'
 import { learnCategory } from '../lib/ocrMemory.js'
+import { splitVatFromGross } from '../lib/vat.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -11,6 +12,11 @@ const emptyForm = {
   category: EXPENSE_CATEGORIES[0],
   note: '',
   date: today(),
+  hasVat: false,
+  vatInvoiceType: 'full',
+  vatInvoiceNumber: '',
+  vatTaxId: '',
+  vatCreditBlocked: false,
 }
 
 export default function TransactionForm({ open, onClose, onSubmit, initial }) {
@@ -33,6 +39,11 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
         category: initial.category,
         note: initial.note || '',
         date: initial.date,
+        hasVat: Boolean(initial.hasVat),
+        vatInvoiceType: initial.vatInvoiceType || 'full',
+        vatInvoiceNumber: initial.vatInvoiceNumber || '',
+        vatTaxId: initial.vatTaxId || '',
+        vatCreditBlocked: Boolean(initial.vatCreditBlocked),
       })
       setImagePreview(initial.image || null)
     } else {
@@ -51,7 +62,12 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
 
   function handleTypeChange(type) {
     const list = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES
-    setForm((f) => ({ ...f, type, category: list[0] }))
+    setForm((f) => ({
+      ...f,
+      type,
+      category: list[0],
+      vatCreditBlocked: type === 'income' ? false : f.vatCreditBlocked,
+    }))
   }
 
   function handleFileChange(e) {
@@ -181,6 +197,112 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
               className="w-full border border-slate-300 rounded-lg px-3 py-2"
               placeholder="0.00"
             />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm text-slate-600">
+              <input
+                type="checkbox"
+                checked={form.hasVat}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, hasVat: e.target.checked }))
+                }
+              />
+              มีใบกำกับภาษี (VAT)
+            </label>
+
+            {form.hasVat && (
+              <div className="mt-2 space-y-3 border border-slate-200 rounded-lg p-3 bg-slate-50">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, vatInvoiceType: 'full' }))
+                    }
+                    className={`py-1.5 rounded-lg text-xs font-medium border ${
+                      form.vatInvoiceType === 'full'
+                        ? 'bg-indigo-500 text-white border-indigo-500'
+                        : 'bg-white text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    ใบกำกับภาษีเต็มรูป
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm((f) => ({ ...f, vatInvoiceType: 'abbreviated' }))
+                    }
+                    className={`py-1.5 rounded-lg text-xs font-medium border ${
+                      form.vatInvoiceType === 'abbreviated'
+                        ? 'bg-indigo-500 text-white border-indigo-500'
+                        : 'bg-white text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    ใบกำกับภาษีอย่างย่อ
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
+                    เลขที่ใบกำกับภาษี
+                  </label>
+                  <input
+                    type="text"
+                    value={form.vatInvoiceNumber}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, vatInvoiceNumber: e.target.value }))
+                    }
+                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                  />
+                </div>
+
+                {form.vatInvoiceType === 'full' && (
+                  <div>
+                    <label className="block text-xs text-slate-500 mb-1">
+                      เลขประจำตัวผู้เสียภาษีของคู่ค้า (13 หลัก)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={13}
+                      value={form.vatTaxId}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          vatTaxId: e.target.value.replace(/\D/g, '').slice(0, 13),
+                        }))
+                      }
+                      className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                    />
+                  </div>
+                )}
+
+                {Number(form.amount) > 0 && (
+                  <p className="text-xs text-slate-500">
+                    แยกยอด (VAT 7%): ก่อนภาษี{' '}
+                    {formatBaht(splitVatFromGross(form.amount).base)} + VAT{' '}
+                    {formatBaht(splitVatFromGross(form.amount).vat)} = รวม{' '}
+                    {formatBaht(form.amount)} บาท
+                  </p>
+                )}
+
+                {form.type === 'expense' && form.vatInvoiceType === 'full' && (
+                  <label className="flex items-center gap-2 text-xs text-slate-600">
+                    <input
+                      type="checkbox"
+                      checked={form.vatCreditBlocked}
+                      onChange={(e) =>
+                        setForm((f) => ({
+                          ...f,
+                          vatCreditBlocked: e.target.checked,
+                        }))
+                      }
+                    />
+                    ภาษีซื้อต้องห้าม (นำไปเครดิตภาษีขายไม่ได้ เช่น ค่ารับรอง/รถยนต์นั่งส่วนบุคคล)
+                  </label>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
