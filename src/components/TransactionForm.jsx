@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '../lib/categories.js'
 import { recognizeReceiptText, parseReceiptText } from '../lib/ocr.js'
+import { learnCategory } from '../lib/ocrMemory.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -20,6 +21,7 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
   const [error, setError] = useState(null)
   const [ocrLoading, setOcrLoading] = useState(false)
   const [ocrProgress, setOcrProgress] = useState(0)
+  const [ocrMerchantKey, setOcrMerchantKey] = useState(null)
   const fileInputRef = useRef(null)
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
     }
     setImageFile(null)
     setError(null)
+    setOcrMerchantKey(null)
   }, [open, initial])
 
   if (!open) return null
@@ -61,6 +64,7 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
     setImageFile(file)
     setImagePreview(URL.createObjectURL(file))
     setError(null)
+    setOcrMerchantKey(null)
   }
 
   async function handleReadReceipt() {
@@ -85,6 +89,7 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
         amount: guess.amount != null ? String(guess.amount) : f.amount,
         note: guess.note || f.note,
       }))
+      setOcrMerchantKey(guess.merchantKey || null)
       if (guess.amount == null) {
         setError('อ่านบิลได้แต่หาจำนวนเงินไม่เจอ กรุณากรอกเอง')
       }
@@ -106,6 +111,9 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
     setError(null)
     try {
       await onSubmit({ ...form, imageFile })
+      if (ocrMerchantKey && form.type === 'expense') {
+        learnCategory(ocrMerchantKey, form.category)
+      }
       onClose()
     } catch (err) {
       console.error(err)
@@ -243,7 +251,8 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
                     : 'อ่านบิลอัตโนมัติด้วย OCR (ฟรี)'}
                 </button>
                 <p className="mt-1 text-xs text-slate-400">
-                  ระบบจะเดาจำนวนเงิน/หมวดหมู่ให้ กรุณาตรวจสอบก่อนบันทึก
+                  ระบบจะเดาจำนวนเงิน/หมวดหมู่ให้ กรุณาตรวจสอบก่อนบันทึก — ถ้าแก้หมวดหมู่แล้วกดบันทึก
+                  ระบบจะจำไว้ว่าร้านนี้เป็นหมวดหมู่นี้ ครั้งต่อไปจะเดาให้ถูกทันที
                 </p>
               </>
             )}

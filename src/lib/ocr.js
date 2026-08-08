@@ -1,4 +1,5 @@
 import { EXPENSE_CATEGORIES } from './categories.js'
+import { getLearnedCategory } from './ocrMemory.js'
 
 // Free, in-browser OCR (no server, no API key). Tesseract.js downloads its
 // worker/wasm/language data from a CDN on first use and caches it.
@@ -114,7 +115,11 @@ function guessNote(text) {
 export function parseReceiptText(text) {
   return {
     amount: extractAmount(text),
-    category: guessCategory(text) || EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1],
+    category:
+      getLearnedCategory(text) ||
+      guessCategory(text) ||
+      EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1],
     note: guessNote(text),
+    merchantKey: guessNote(text),
   }
 }
