@@ -3,12 +3,14 @@ import SummaryCards from './components/SummaryCards.jsx'
 import PeriodFilter from './components/PeriodFilter.jsx'
 import TransactionForm from './components/TransactionForm.jsx'
 import TransactionList from './components/TransactionList.jsx'
+import CompanySettingsForm from './components/CompanySettingsForm.jsx'
 import {
   subscribeTransactions,
   addTransaction,
   updateTransaction,
   deleteTransaction,
 } from './lib/transactions.js'
+import { subscribeCompanyProfile, saveCompanyProfile } from './lib/settings.js'
 import { compressImageToDataUrl } from './lib/imageCompress.js'
 import { splitVatFromGross } from './lib/vat.js'
 
@@ -32,12 +34,21 @@ export default function App() {
   const [editingItem, setEditingItem] = useState(null)
   const [exporting, setExporting] = useState(false)
 
+  const [companyProfile, setCompanyProfile] = useState(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
   useEffect(() => {
     if (!FIREBASE_CONFIGURED) return
     const unsubscribe = subscribeTransactions(
       setTransactions,
       (err) => setLoadError(err.message),
     )
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    if (!FIREBASE_CONFIGURED) return
+    const unsubscribe = subscribeCompanyProfile(setCompanyProfile, () => {})
     return unsubscribe
   }, [])
 
@@ -97,6 +108,7 @@ export default function App() {
               vatInvoiceType: rest.vatInvoiceType || 'full',
               vatInvoiceNumber: rest.vatInvoiceNumber || '',
               vatTaxId: rest.vatTaxId || '',
+              vatCounterpartyName: rest.vatCounterpartyName || '',
               vatCreditBlocked: Boolean(rest.vatCreditBlocked),
               ...splitVatFromGrossFields(grossAmount),
             }
@@ -124,7 +136,7 @@ export default function App() {
     setExporting(true)
     try {
       const { generatePdfReport } = await import('./lib/pdfReport.js')
-      await generatePdfReport(transactions, { mode, year, month })
+      await generatePdfReport(transactions, { mode, year, month, companyProfile })
     } catch (err) {
       console.error(err)
       alert('สร้าง PDF ไม่สำเร็จ: ' + err.message)
@@ -137,13 +149,17 @@ export default function App() {
     setExporting(true)
     try {
       const { generateVatReport } = await import('./lib/vatReport.js')
-      await generateVatReport(transactions, { year, month })
+      await generateVatReport(transactions, { year, month, companyProfile })
     } catch (err) {
       console.error(err)
       alert('สร้างรายงานภาษีไม่สำเร็จ: ' + err.message)
     } finally {
       setExporting(false)
     }
+  }
+
+  async function handleSaveCompanyProfile(profile) {
+    await saveCompanyProfile(profile)
   }
 
   if (!FIREBASE_CONFIGURED) {
@@ -179,14 +195,22 @@ export default function App() {
           <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-2xl shrink-0">
             ฿
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-[0.2em] text-emerald-400 uppercase">
               19FirstTime
             </p>
             <h1 className="text-xl font-bold leading-tight truncate">
-              บันทึกรายรับ-รายจ่าย
+              {companyProfile?.companyName || 'บันทึกรายรับ-รายจ่าย'}
             </h1>
           </div>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="shrink-0 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-lg"
+            aria-label="ตั้งค่าข้อมูลกิจการ"
+          >
+            ⚙
+          </button>
         </div>
       </header>
 
@@ -226,6 +250,13 @@ export default function App() {
         onClose={() => setFormOpen(false)}
         onSubmit={handleSubmit}
         initial={editingItem}
+      />
+
+      <CompanySettingsForm
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        onSubmit={handleSaveCompanyProfile}
+        initial={companyProfile}
       />
     </div>
   )

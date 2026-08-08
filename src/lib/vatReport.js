@@ -13,16 +13,54 @@ function filterVatItems(transactions, { year, month }) {
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
 }
 
+function branchLabel(companyProfile) {
+  if (!companyProfile) return ''
+  if (companyProfile.branchType === 'branch') {
+    return `สาขาเลขที่ ${companyProfile.branchNumber || '-'}`
+  }
+  return 'สำนักงานใหญ่'
+}
+
+function drawCompanyHeader(doc, companyProfile, pageWidth, startY) {
+  if (!companyProfile?.companyName && !companyProfile?.taxId) return startY
+  let y = startY
+  doc.setFont('Sarabun', 'bold')
+  doc.setFontSize(11)
+  if (companyProfile.companyName) {
+    doc.text(companyProfile.companyName, pageWidth / 2, y, { align: 'center' })
+    y += 5
+  }
+  doc.setFont('Sarabun', 'normal')
+  doc.setFontSize(9)
+  const line2 = [
+    companyProfile.taxId ? `เลขประจำตัวผู้เสียภาษีอากร ${companyProfile.taxId}` : null,
+    branchLabel(companyProfile),
+  ]
+    .filter(Boolean)
+    .join('   |   ')
+  if (line2) {
+    doc.text(line2, pageWidth / 2, y, { align: 'center' })
+    y += 5
+  }
+  if (companyProfile.address) {
+    const split = doc.splitTextToSize(companyProfile.address, pageWidth - 40)
+    doc.text(split, pageWidth / 2, y, { align: 'center' })
+    y += split.length * 4
+  }
+  return y + 3
+}
+
 function vatTable(doc, startY, items, { includeNote }) {
   const head = includeNote
-    ? [['ลำดับ', 'วันที่', 'เลขที่ใบกำกับภาษี', 'เลขผู้เสียภาษีคู่ค้า', 'มูลค่าก่อนภาษี', 'VAT', 'หมายเหตุ']]
-    : [['ลำดับ', 'วันที่', 'เลขที่ใบกำกับภาษี', 'เลขผู้เสียภาษีคู่ค้า', 'มูลค่าก่อนภาษี', 'VAT']]
+    ? [['ลำดับ', 'วันที่', 'เลขที่ใบกำกับภาษี', 'ชื่อคู่ค้า', 'เลขผู้เสียภาษีคู่ค้า', 'มูลค่าก่อนภาษี', 'VAT', 'หมายเหตุ']]
+    : [['ลำดับ', 'วันที่', 'เลขที่ใบกำกับภาษี', 'ชื่อคู่ค้า', 'เลขผู้เสียภาษีคู่ค้า', 'มูลค่าก่อนภาษี', 'VAT']]
 
   const body = items.map((t, i) => {
     const row = [
       String(i + 1),
       t.date,
       t.vatInvoiceNumber || '-',
+      t.vatCounterpartyName || '-',
       t.vatTaxId || '-',
       formatBaht(t.vatBase ?? 0),
       formatBaht(t.vatAmount ?? 0),
@@ -38,8 +76,8 @@ function vatTable(doc, startY, items, { includeNote }) {
     styles: { font: 'Sarabun', fontSize: 9, cellPadding: 2 },
     headStyles: { font: 'Sarabun', fontStyle: 'bold', fillColor: [15, 23, 42] },
     columnStyles: {
-      4: { halign: 'right' },
       5: { halign: 'right' },
+      6: { halign: 'right' },
     },
     didDrawPage: () => {
       doc.setFont('Sarabun', 'normal')
@@ -49,9 +87,9 @@ function vatTable(doc, startY, items, { includeNote }) {
   return doc.lastAutoTable.finalY
 }
 
-export async function generateVatReport(transactions, { year, month }) {
+export async function generateVatReport(transactions, { year, month, companyProfile }) {
   const fonts = await loadThaiFonts()
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape' })
   registerThaiFonts(doc, fonts)
 
   const pageWidth = doc.internal.pageSize.getWidth()
@@ -81,7 +119,9 @@ export async function generateVatReport(transactions, { year, month }) {
   doc.setFontSize(12)
   doc.text(periodLabel, pageWidth / 2, 22, { align: 'center' })
 
-  let y = 32
+  let y = drawCompanyHeader(doc, companyProfile, pageWidth, 29)
+  y = Math.max(y, 32)
+
   doc.setFont('Sarabun', 'bold')
   doc.setFontSize(12)
   doc.text('รายงานภาษีขาย (Output VAT)', 14, y)

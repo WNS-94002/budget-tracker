@@ -3,6 +3,7 @@ import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, formatBaht } from '../lib/catego
 import { recognizeReceiptText, parseReceiptText } from '../lib/ocr.js'
 import { learnCategory } from '../lib/ocrMemory.js'
 import { splitVatFromGross } from '../lib/vat.js'
+import { isValidThaiTaxId } from '../lib/taxId.js'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -16,6 +17,7 @@ const emptyForm = {
   vatInvoiceType: 'full',
   vatInvoiceNumber: '',
   vatTaxId: '',
+  vatCounterpartyName: '',
   vatCreditBlocked: false,
 }
 
@@ -43,6 +45,7 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
         vatInvoiceType: initial.vatInvoiceType || 'full',
         vatInvoiceNumber: initial.vatInvoiceNumber || '',
         vatTaxId: initial.vatTaxId || '',
+        vatCounterpartyName: initial.vatCounterpartyName || '',
         vatCreditBlocked: Boolean(initial.vatCreditBlocked),
       })
       setImagePreview(initial.image || null)
@@ -244,6 +247,23 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
 
                 <div>
                   <label className="block text-xs text-slate-500 mb-1">
+                    ชื่อผู้ขาย/ผู้ซื้อ (คู่ค้า)
+                  </label>
+                  <input
+                    type="text"
+                    value={form.vatCounterpartyName}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        vatCounterpartyName: e.target.value,
+                      }))
+                    }
+                    className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-500 mb-1">
                     เลขที่ใบกำกับภาษี
                   </label>
                   <input
@@ -274,6 +294,11 @@ export default function TransactionForm({ open, onClose, onSubmit, initial }) {
                       }
                       className="w-full border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
                     />
+                    {form.vatTaxId.length > 0 && !isValidThaiTaxId(form.vatTaxId) && (
+                      <p className="text-xs text-amber-600 mt-1">
+                        รูปแบบเลขผู้เสียภาษีนี้ดูไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง
+                      </p>
+                    )}
                   </div>
                 )}
 

@@ -8,5 +8,11 @@ service cloud.firestore {
     match /transactions/{docId} {
       allow read, write: if true;
     }
+
+    // Single shared document holding the company profile (name, tax ID,
+    // address) printed on report headers.
+    match /meta/{docId} {
+      allow read, write: if true;
+    }
   }
 }

@@ -44,6 +44,7 @@ export async function addTransaction({
   vatInvoiceType,
   vatInvoiceNumber,
   vatTaxId,
+  vatCounterpartyName,
   vatCreditBlocked,
 }) {
   let image = null
@@ -58,6 +59,7 @@ export async function addTransaction({
         vatInvoiceType: vatInvoiceType || 'full',
         vatInvoiceNumber: vatInvoiceNumber || '',
         vatTaxId: vatTaxId || '',
+        vatCounterpartyName: vatCounterpartyName || '',
         vatCreditBlocked: Boolean(vatCreditBlocked),
         ...splitVatToStoredFields(grossAmount),
       }

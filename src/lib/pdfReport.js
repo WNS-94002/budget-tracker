@@ -20,7 +20,7 @@ function periodLabel({ mode, year, month }) {
   return `ปี พ.ศ. ${buddhistYear}`
 }
 
-export async function generatePdfReport(transactions, { mode, year, month }) {
+export async function generatePdfReport(transactions, { mode, year, month, companyProfile }) {
   const fonts = await loadThaiFonts()
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   registerThaiFonts(doc, fonts)
@@ -49,8 +49,18 @@ export async function generatePdfReport(transactions, { mode, year, month }) {
     align: 'center',
   })
 
+  let headerBottom = 22
+  if (companyProfile?.companyName || companyProfile?.taxId) {
+    doc.setFontSize(9)
+    const line = [companyProfile.companyName, companyProfile.taxId ? `เลขผู้เสียภาษี ${companyProfile.taxId}` : null]
+      .filter(Boolean)
+      .join('   |   ')
+    doc.text(line, pageWidth / 2, headerBottom + 6, { align: 'center' })
+    headerBottom += 6
+  }
+
   doc.setFontSize(11)
-  const summaryY = 30
+  const summaryY = headerBottom + 8
   doc.setTextColor(22, 163, 74)
   doc.text(`รายรับรวม: ${formatBaht(income)} บาท`, 14, summaryY)
   doc.setTextColor(220, 38, 38)
