@@ -144,9 +144,19 @@ export default function App() {
 
   return (
     <div className="min-h-screen pb-24">
-      <header className="bg-slate-900 text-white py-5 px-4">
-        <div className="max-w-2xl mx-auto">
-          <h1 className="text-xl font-semibold">บันทึกรายรับ-รายจ่าย</h1>
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 text-white py-5 px-4 shadow-md">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-2xl shrink-0">
+            ฿
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold tracking-[0.2em] text-emerald-400 uppercase">
+              19FirstTime
+            </p>
+            <h1 className="text-xl font-bold leading-tight truncate">
+              บันทึกรายรับ-รายจ่าย
+            </h1>
+          </div>
         </div>
       </header>
 
