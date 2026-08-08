@@ -64,7 +64,9 @@ export default function PeriodFilter({
         disabled={exporting}
         className="w-full px-3 py-2 text-sm rounded-lg border border-indigo-300 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
       >
-        {exporting ? 'กำลังสร้าง PDF...' : 'ดาวน์โหลดรายงานภาษีซื้อ-ขาย (รายเดือน)'}
+        {exporting
+          ? 'กำลังสร้าง PDF...'
+          : 'ดาวน์โหลดรายงานภาษีซื้อ + ภาษีขาย (รายเดือน, 2 ไฟล์)'}
       </button>
     </div>
   )
