@@ -137,15 +137,9 @@ function drawVatTable(doc, startY, items, counterpartyHeader) {
   return { totalBase, totalVat }
 }
 
-async function buildReportDoc({ title, fileName, items, counterpartyHeader, periodLabel, companyProfile }) {
-  const fonts = await loadThaiFonts()
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
-  registerThaiFonts(doc, fonts)
-
+function drawReportPage(doc, { title, items, counterpartyHeader, periodLabel, companyProfile }) {
   const startY = drawHeaderBlock(doc, { title, periodLabel, companyProfile })
   drawVatTable(doc, startY, items, counterpartyHeader)
-
-  doc.save(fileName)
 }
 
 export async function generateVatReport(transactions, { year, month, companyProfile }) {
@@ -158,21 +152,26 @@ export async function generateVatReport(transactions, { year, month, companyProf
     (t) => t.type === 'expense' && t.vatInvoiceType === 'full',
   )
 
-  await buildReportDoc({
+  const fonts = await loadThaiFonts()
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  registerThaiFonts(doc, fonts)
+
+  drawReportPage(doc, {
     title: 'รายการภาษีขาย',
-    fileName: `รายงานภาษีขาย ประจำเดือน ${monthName} ${toBuddhistYear(year)}.pdf`,
     items: salesItems,
     counterpartyHeader: 'ชื่อผู้ซื้อสินค้า/ผู้รับบริการ',
     periodLabel,
     companyProfile,
   })
 
-  await buildReportDoc({
+  doc.addPage()
+  drawReportPage(doc, {
     title: 'รายการภาษีซื้อ',
-    fileName: `รายงานภาษีซื้อ ประจำเดือน ${monthName} ${toBuddhistYear(year)}.pdf`,
     items: purchaseItems,
     counterpartyHeader: 'ชื่อผู้ขายสินค้า/ผู้ให้บริการ',
     periodLabel,
     companyProfile,
   })
+
+  doc.save(`รายงานภาษีซื้อ-ขาย ประจำเดือน ${monthName} ${toBuddhistYear(year)}.pdf`)
 }
