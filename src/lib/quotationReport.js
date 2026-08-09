@@ -71,7 +71,7 @@ function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
   }
   const rightBottom = y
 
-  const logoTopPadding = 1
+  const logoTopPadding = 0
   const boxBottom = Math.max(leftBottom, rightBottom, boxTop + logoTopPadding + logoSize) + 2
 
   if (logo) {
