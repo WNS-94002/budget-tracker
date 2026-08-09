@@ -11,7 +11,7 @@
 
 - **Frontend**: React + Vite + Tailwind CSS
 - **ฐานข้อมูล**: Firebase Firestore (Spark/free plan — รูปใบเสร็จถูกย่อขนาดแล้วเก็บเป็น base64 ในเอกสารเดียวกัน แทนการใช้ Firebase Storage เพื่อไม่ต้องผูกบัตรเครดิต/อัปเกรดแผน Blaze)
-- **สร้าง PDF**: jsPDF + jspdf-autotable (ฝังฟอนต์ไทย Sarabun ไว้ในตัวแอปแล้ว)
+- **สร้าง PDF**: pdfmake (ใช้ PDFKit + fontkit เบื้องหลัง) ฝังฟอนต์ไทย Sarabun — เลือกใช้แทน jsPDF เพราะ jsPDF ไม่อ่านตาราง GPOS ในไฟล์ฟอนต์ ทำให้วรรณยุกต์ทับกับสระบน (เช่น หนึ่ง = ึ + ่) ส่วน fontkit จัดวางให้ถูกต้องอัตโนมัติ และยังได้ตัวอักษรจริงที่คัดลอก/ค้นหาในไฟล์ได้
 - **Deploy**: GitHub Actions -> GitHub Pages
 
 ---
