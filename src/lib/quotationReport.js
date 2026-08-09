@@ -71,14 +71,15 @@ function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
   }
   const rightBottom = y
 
-  const boxBottom = Math.max(leftBottom, rightBottom, boxTop + 3 + logoSize) + 2
+  const logoTopPadding = 1
+  const boxBottom = Math.max(leftBottom, rightBottom, boxTop + logoTopPadding + logoSize) + 2
 
   if (logo) {
     doc.addImage(
       logo,
       'PNG',
       pageWidth / 2 - logoSize / 2,
-      boxTop + 3,
+      boxTop + logoTopPadding,
       logoSize,
       logoSize,
     )
