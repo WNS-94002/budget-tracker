@@ -202,7 +202,7 @@ export default function App() {
             <p className="text-[11px] font-semibold tracking-[0.2em] text-emerald-400 uppercase">
               19FirstTime
             </p>
-            <h1 className="text-xl font-bold leading-tight truncate">
+            <h1 className="text-xl font-bold leading-normal truncate">
               {companyProfile?.companyName || 'บันทึกรายรับ-รายจ่าย'}
             </h1>
           </div>
