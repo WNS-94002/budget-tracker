@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
-import SummaryCards from './components/SummaryCards.jsx'
-import PeriodFilter from './components/PeriodFilter.jsx'
+import NavTabs from './components/NavTabs.jsx'
+import PeriodSelector from './components/PeriodSelector.jsx'
+import HomePage from './components/HomePage.jsx'
+import TaxPage from './components/TaxPage.jsx'
+import CashFlowPage from './components/CashFlowPage.jsx'
 import TransactionForm from './components/TransactionForm.jsx'
-import TransactionList from './components/TransactionList.jsx'
 import CompanySettingsForm from './components/CompanySettingsForm.jsx'
 import {
   subscribeTransactions,
@@ -27,6 +29,7 @@ export default function App() {
   const [transactions, setTransactions] = useState([])
   const [loadError, setLoadError] = useState(null)
 
+  const [activePage, setActivePage] = useState('home')
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
 
@@ -190,8 +193,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen pb-24">
-      <header className="sticky top-0 z-10 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 text-white py-5 px-4 shadow-md">
-        <div className="max-w-2xl mx-auto flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 text-white shadow-md">
+        <div className="max-w-2xl mx-auto flex items-center gap-3 py-5 px-4">
           <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-2xl shrink-0">
             ฿
           </div>
@@ -212,28 +215,47 @@ export default function App() {
             ⚙
           </button>
         </div>
+
+        <NavTabs active={activePage} onChange={setActivePage} />
       </header>
 
       <main className="max-w-2xl mx-auto px-4 mt-4 space-y-4">
-        <SummaryCards income={income} expense={expense} />
-
-        <PeriodFilter
+        <PeriodSelector
           year={year}
           month={month}
           years={years}
           onYearChange={setYear}
           onMonthChange={setMonth}
-          onExportMonth={() => handleExport('month')}
-          onExportYear={() => handleExport('year')}
-          onExportVat={handleExportVat}
-          exporting={exporting}
         />
 
-        <TransactionList
-          items={periodItems}
-          onEdit={openEditForm}
-          onDelete={handleDelete}
-        />
+        {activePage === 'home' && (
+          <HomePage
+            periodItems={periodItems}
+            income={income}
+            expense={expense}
+            onExportMonth={() => handleExport('month')}
+            onExportYear={() => handleExport('year')}
+            exporting={exporting}
+            onEdit={openEditForm}
+            onDelete={handleDelete}
+          />
+        )}
+
+        {activePage === 'tax' && (
+          <TaxPage
+            transactions={transactions}
+            year={year}
+            month={month}
+            companyProfile={companyProfile}
+            onExportVat={handleExportVat}
+            onOpenSettings={() => setSettingsOpen(true)}
+            exporting={exporting}
+          />
+        )}
+
+        {activePage === 'cashflow' && (
+          <CashFlowPage transactions={transactions} year={year} month={month} />
+        )}
       </main>
 
       <button

@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { THAI_MONTHS, formatBaht, toBuddhistYear } from './categories.js'
 import { loadThaiFonts, registerThaiFonts } from './pdfFonts.js'
+import { computeVatSummary } from './vatSummary.js'
 
 const THAI_MONTHS_ABBR = [
   'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
@@ -14,16 +15,6 @@ function formatThaiShortDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number)
   const shortYear = String(toBuddhistYear(y)).slice(-2)
   return `${d} ${THAI_MONTHS_ABBR[m - 1]} ${shortYear}`
-}
-
-function filterVatItems(transactions, { year, month }) {
-  return transactions
-    .filter((t) => {
-      if (!t.hasVat) return false
-      const [y, m] = t.date.split('-').map(Number)
-      return y === year && m === month
-    })
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
 }
 
 function branchLine(companyProfile) {
@@ -146,11 +137,7 @@ export async function generateVatReport(transactions, { year, month, companyProf
   const periodLabel = `${THAI_MONTHS[month - 1]} ${toBuddhistYear(year)}`
   const monthName = THAI_MONTHS[month - 1]
 
-  const items = filterVatItems(transactions, { year, month })
-  const salesItems = items.filter((t) => t.type === 'income')
-  const purchaseItems = items.filter(
-    (t) => t.type === 'expense' && t.vatInvoiceType === 'full',
-  )
+  const { salesItems, purchaseItems } = computeVatSummary(transactions, { year, month })
 
   const fonts = await loadThaiFonts()
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
