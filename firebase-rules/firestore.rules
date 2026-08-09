@@ -14,5 +14,9 @@ service cloud.firestore {
     match /meta/{docId} {
       allow read, write: if true;
     }
+
+    match /quotations/{docId} {
+      allow read, write: if true;
+    }
   }
 }

@@ -4,6 +4,7 @@ import PeriodSelector from './components/PeriodSelector.jsx'
 import HomePage from './components/HomePage.jsx'
 import TaxPage from './components/TaxPage.jsx'
 import CashFlowPage from './components/CashFlowPage.jsx'
+import QuotationPage from './components/QuotationPage.jsx'
 import TransactionForm from './components/TransactionForm.jsx'
 import CompanySettingsForm from './components/CompanySettingsForm.jsx'
 import {
@@ -12,6 +13,12 @@ import {
   updateTransaction,
   deleteTransaction,
 } from './lib/transactions.js'
+import {
+  subscribeQuotations,
+  addQuotation,
+  updateQuotation,
+  deleteQuotation,
+} from './lib/quotations.js'
 import { subscribeCompanyProfile, saveCompanyProfile } from './lib/settings.js'
 import { processAttachment } from './lib/imageCompress.js'
 import { splitVatFromGross } from './lib/vat.js'
@@ -40,6 +47,8 @@ export default function App() {
   const [companyProfile, setCompanyProfile] = useState(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
+  const [quotations, setQuotations] = useState([])
+
   useEffect(() => {
     if (!FIREBASE_CONFIGURED) return
     const unsubscribe = subscribeTransactions(
@@ -52,6 +61,12 @@ export default function App() {
   useEffect(() => {
     if (!FIREBASE_CONFIGURED) return
     const unsubscribe = subscribeCompanyProfile(setCompanyProfile, () => {})
+    return unsubscribe
+  }, [])
+
+  useEffect(() => {
+    if (!FIREBASE_CONFIGURED) return
+    const unsubscribe = subscribeQuotations(setQuotations, () => {})
     return unsubscribe
   }, [])
 
@@ -165,6 +180,19 @@ export default function App() {
     await saveCompanyProfile(profile)
   }
 
+  async function handleDownloadQuotation(quotation) {
+    setExporting(true)
+    try {
+      const { generateQuotationPdf } = await import('./lib/quotationReport.js')
+      await generateQuotationPdf(quotation, { companyProfile })
+    } catch (err) {
+      console.error(err)
+      alert('สร้างใบเสนอราคาไม่สำเร็จ: ' + err.message)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   if (!FIREBASE_CONFIGURED) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
@@ -222,13 +250,15 @@ export default function App() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 mt-4 space-y-4">
-        <PeriodSelector
-          year={year}
-          month={month}
-          years={years}
-          onYearChange={setYear}
-          onMonthChange={setMonth}
-        />
+        {activePage !== 'quotation' && (
+          <PeriodSelector
+            year={year}
+            month={month}
+            years={years}
+            onYearChange={setYear}
+            onMonthChange={setMonth}
+          />
+        )}
 
         {activePage === 'home' && (
           <HomePage
@@ -258,16 +288,30 @@ export default function App() {
         {activePage === 'cashflow' && (
           <CashFlowPage transactions={transactions} year={year} month={month} />
         )}
+
+        {activePage === 'quotation' && (
+          <QuotationPage
+            quotations={quotations}
+            companyProfile={companyProfile}
+            onAdd={addQuotation}
+            onUpdate={updateQuotation}
+            onDelete={deleteQuotation}
+            onDownload={handleDownloadQuotation}
+            exporting={exporting}
+          />
+        )}
       </main>
 
-      <button
-        type="button"
-        onClick={openAddForm}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-emerald-500 text-white text-3xl shadow-lg hover:bg-emerald-600 flex items-center justify-center"
-        aria-label="เพิ่มรายการ"
-      >
-        +
-      </button>
+      {activePage !== 'quotation' && (
+        <button
+          type="button"
+          onClick={openAddForm}
+          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-emerald-500 text-white text-3xl shadow-lg hover:bg-emerald-600 flex items-center justify-center"
+          aria-label="เพิ่มรายการ"
+        >
+          +
+        </button>
+      )}
 
       <TransactionForm
         open={formOpen}

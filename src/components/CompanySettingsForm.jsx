@@ -3,10 +3,14 @@ import { isValidThaiTaxId } from '../lib/taxId.js'
 
 const emptyProfile = {
   companyName: '',
+  companyNameEn: '',
   taxId: '',
   branchType: 'main',
   branchNumber: '',
   address: '',
+  addressEn: '',
+  phone: '',
+  email: '',
 }
 
 export default function CompanySettingsForm({ open, onClose, onSubmit, initial }) {
@@ -69,6 +73,21 @@ export default function CompanySettingsForm({ open, onClose, onSubmit, initial }
                 setForm((f) => ({ ...f, companyName: e.target.value }))
               }
               className="w-full border border-slate-300 rounded-lg px-3 py-2"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-600 mb-1">
+              ชื่อกิจการภาษาอังกฤษ (ไม่บังคับ, ใช้ในใบเสนอราคา)
+            </label>
+            <input
+              type="text"
+              value={form.companyNameEn}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, companyNameEn: e.target.value }))
+              }
+              className="w-full border border-slate-300 rounded-lg px-3 py-2"
+              placeholder="เช่น 19 FIRST TIME LTD.,PART"
             />
           </div>
 
@@ -149,6 +168,45 @@ export default function CompanySettingsForm({ open, onClose, onSubmit, initial }
               rows={2}
               className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm text-slate-600 mb-1">
+              ที่อยู่ภาษาอังกฤษ (ไม่บังคับ, ใช้ในใบเสนอราคา)
+            </label>
+            <textarea
+              value={form.addressEn}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, addressEn: e.target.value }))
+              }
+              rows={2}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">
+                โทรศัพท์ (ไม่บังคับ)
+              </label>
+              <input
+                type="text"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2"
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-slate-600 mb-1">
+                อีเมล (ไม่บังคับ)
+              </label>
+              <input
+                type="text"
+                value={form.email}
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2"
+              />
+            </div>
           </div>
 
           {error && <p className="text-sm text-rose-600">{error}</p>}
