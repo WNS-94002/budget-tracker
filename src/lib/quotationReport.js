@@ -6,11 +6,16 @@ import { bahtText } from './bahtText.js'
 
 const BAND_FILL = [224, 231, 247]
 
+// Tightly-cropped logo (no surrounding whitespace, unlike the square
+// logo.png used for the round web header badge) so it can sit flush
+// against the header border. height / width of that artwork.
+const LOGO_ASPECT = 0.6952
+
 let logoBase64Cache = null
 async function loadLogoBase64() {
   if (logoBase64Cache) return logoBase64Cache
   const base = import.meta.env.BASE_URL
-  const buf = await fetch(`${base}logo.png`).then((r) => r.arrayBuffer())
+  const buf = await fetch(`${base}logo-wide.png`).then((r) => r.arrayBuffer())
   const bytes = new Uint8Array(buf)
   let binary = ''
   const chunkSize = 0x8000
@@ -28,8 +33,9 @@ function formatThaiFullDate(dateStr) {
 
 function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
   const boxTop = 8
-  const logoSize = 48
-  const logoHalfGap = logoSize / 2 + 4
+  const logoWidth = 48
+  const logoHeight = logoWidth * LOGO_ASPECT
+  const logoHalfGap = logoWidth / 2 + 4
   const leftX = 16
   const rightX = pageWidth / 2 + logoHalfGap
   const colWidth = pageWidth / 2 - logoHalfGap - leftX
@@ -71,18 +77,17 @@ function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
   }
   const rightBottom = y
 
-  const minBoxHeight = logoSize + 4
-  const boxBottom = Math.max(leftBottom, rightBottom, boxTop + minBoxHeight) + 2
-  const boxHeight = boxBottom - boxTop
+  const logoTop = boxTop
+  const boxBottom = Math.max(leftBottom, rightBottom, logoTop + logoHeight) + 2
 
   if (logo) {
     doc.addImage(
       logo,
       'PNG',
-      pageWidth / 2 - logoSize / 2,
-      boxTop + (boxHeight - logoSize) / 2,
-      logoSize,
-      logoSize,
+      pageWidth / 2 - logoWidth / 2,
+      logoTop,
+      logoWidth,
+      logoHeight,
     )
   }
 
