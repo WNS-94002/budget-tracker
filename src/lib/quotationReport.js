@@ -85,7 +85,6 @@ function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
 
   doc.setDrawColor(0, 0, 0)
   doc.rect(14, boxTop, pageWidth - 28, boxBottom - boxTop)
-  doc.line(pageWidth / 2, boxTop, pageWidth / 2, boxBottom)
 
   return boxBottom
 }
@@ -104,10 +103,12 @@ function drawBand(doc, text, y, pageWidth, height = 7) {
 function drawInfoBox(doc, y, pageWidth, quotation) {
   const height = 24
   const leftX = 16
-  const rightX = pageWidth / 2 + 14
+  const rightColWidth = 56
+  const dividerX = pageWidth - 14 - rightColWidth
+  const rightX = dividerX + 5
   doc.setDrawColor(0, 0, 0)
   doc.rect(14, y, pageWidth - 28, height)
-  doc.line(pageWidth / 2, y, pageWidth / 2, y + height)
+  doc.line(dividerX, y, dividerX, y + height)
 
   doc.setFontSize(9)
   const rowY = y + 6
@@ -127,12 +128,12 @@ function drawInfoBox(doc, y, pageWidth, quotation) {
   doc.setFont('Sarabun', 'bold')
   doc.text('เลขที่/Number:', rightX, rowY)
   doc.setFont('Sarabun', 'normal')
-  doc.text(quotation.number || '-', rightX + 26, rowY)
+  doc.text(quotation.number || '-', rightX + 24, rowY)
 
   doc.setFont('Sarabun', 'bold')
   doc.text('วันที่/Date:', rightX, rowY + 5)
   doc.setFont('Sarabun', 'normal')
-  doc.text(formatThaiFullDate(quotation.date), rightX + 26, rowY + 5)
+  doc.text(formatThaiFullDate(quotation.date), rightX + 24, rowY + 5)
 
   return y + height
 }
