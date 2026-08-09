@@ -195,9 +195,11 @@ export default function App() {
     <div className="min-h-screen pb-24">
       <header className="sticky top-0 z-10 bg-gradient-to-r from-slate-900 via-slate-900 to-emerald-950 text-white shadow-md">
         <div className="max-w-2xl mx-auto flex items-center gap-3 py-5 px-4">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-500/15 border border-emerald-400/30 flex items-center justify-center text-2xl shrink-0">
-            ฿
-          </div>
+          <img
+            src="./logo.png"
+            alt="19 First Time"
+            className="w-11 h-11 rounded-full shrink-0 bg-white"
+          />
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-semibold tracking-[0.2em] text-emerald-400 uppercase">
               19FirstTime
