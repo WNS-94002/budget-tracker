@@ -28,9 +28,11 @@ function formatThaiFullDate(dateStr) {
 
 function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
   const boxTop = 8
+  const logoSize = 48
+  const logoHalfGap = logoSize / 2 + 4
   const leftX = 16
-  const rightX = pageWidth / 2 + 14
-  const colWidth = pageWidth / 2 - 30
+  const rightX = pageWidth / 2 + logoHalfGap
+  const colWidth = pageWidth / 2 - logoHalfGap - leftX
 
   const branch =
     companyProfile?.branchType === 'branch'
@@ -69,15 +71,14 @@ function drawCompanyHeader(doc, { logo, companyProfile }, pageWidth) {
   }
   const rightBottom = y
 
-  const boxBottom = Math.max(leftBottom, rightBottom, boxTop + 34) + 2
+  const boxBottom = Math.max(leftBottom, rightBottom, boxTop + 3 + logoSize) + 2
 
   if (logo) {
-    const logoSize = 24
     doc.addImage(
       logo,
       'PNG',
       pageWidth / 2 - logoSize / 2,
-      boxTop + 2,
+      boxTop + 3,
       logoSize,
       logoSize,
     )
